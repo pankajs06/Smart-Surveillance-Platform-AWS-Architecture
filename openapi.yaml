@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Drone Backend API
-  description: Smart Surveillance Platform - Drone Video Backend Service
+  title: DSMS On-Premise Surveillance
+  description: Smart Surveillance Platform - Video Backend Service
   version: 0.1.0
 servers:
   - url: http://localhost:8080
@@ -1076,6 +1076,922 @@ paths:
                     type: string
                   components:
                     type: object
+
+  /api/sites:
+    get:
+      tags:
+        - Sites
+      summary: List sites
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of sites
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    name:
+                      type: string
+
+    post:
+      tags:
+        - Sites
+      summary: Create site
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name:
+                  type: string
+      responses:
+        '201':
+          description: Site created
+
+  /api/sites/{id}:
+    get:
+      tags:
+        - Sites
+      summary: Get site
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Site details
+
+    put:
+      tags:
+        - Sites
+      summary: Update site
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Site updated
+
+    delete:
+      tags:
+        - Sites
+      summary: Delete site
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Site deleted
+
+  /api/cameras/{id}/status:
+    get:
+      tags:
+        - Cameras
+      summary: Get camera status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Camera status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  status:
+                    type: string
+
+  /api/cameras/{id}/restart:
+    post:
+      tags:
+        - Cameras
+      summary: Restart camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '202':
+          description: Restart scheduled
+
+  /api/cameras/{id}/health:
+    get:
+      tags:
+        - Cameras
+      summary: Camera health
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health details
+
+  /api/streams/{id}:
+    get:
+      tags:
+        - Streams
+      summary: Get stream details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream details
+
+    get:
+      tags:
+        - Streams
+      summary: (duplicate) Get stream details
+
+  /api/streams/{id}/stats:
+    get:
+      tags:
+        - Streams
+      summary: Stream statistics
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Stream stats
+
+  /api/streams/{id}/viewers:
+    get:
+      tags:
+        - Streams
+      summary: Stream viewers
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Viewer list
+
+  /api/streams/{id}/record:
+    post:
+      tags:
+        - Streams
+      summary: Start recording stream
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttlSeconds:
+                  type: integer
+      responses:
+        '202':
+          description: Recording started
+
+  /api/sessions:
+    get:
+      tags:
+        - Sessions
+      summary: List sessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Sessions list
+
+  /api/sessions/{id}:
+    get:
+      tags:
+        - Sessions
+      summary: Get session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Session details
+
+    delete:
+      tags:
+        - Sessions
+      summary: Delete session
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session deleted
+
+  /api/sessions/active:
+    get:
+      tags:
+        - Sessions
+      summary: Active sessions
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Active sessions
+
+  /api/playback/search:
+    get:
+      tags:
+        - Playback
+      summary: Search playback
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: q
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+
+  /api/playback/bookmarks:
+    get:
+      tags:
+        - Playback
+      summary: List bookmarks
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Bookmarks
+
+  /api/events:
+    get:
+      tags:
+        - Events
+      summary: List events
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Event list
+
+    post:
+      tags:
+        - Events
+      summary: Search events
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Search results
+
+  /api/events/{id}:
+    get:
+      tags:
+        - Events
+      summary: Get event
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Event details
+
+  /api/events/timeline:
+    get:
+      tags:
+        - Events
+      summary: Events timeline
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Timeline
+
+  /api/events/camera/{cameraId}:
+    get:
+      tags:
+        - Events
+      summary: Events by camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cameraId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Camera events
+
+  /api/events/statistics:
+    get:
+      tags:
+        - Events
+      summary: Event statistics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Stats
+
+  /api/alerts:
+    post:
+      tags:
+        - Alerts
+      summary: Create alert
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Alert created
+
+    get:
+      tags:
+        - Alerts
+      summary: List alerts
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Alerts list
+
+  /api/alerts/{id}:
+    get:
+      tags:
+        - Alerts
+      summary: Get alert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Alert details
+
+    put:
+      tags:
+        - Alerts
+      summary: Update alert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Alert updated
+
+    delete:
+      tags:
+        - Alerts
+      summary: Delete alert
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Alert deleted
+
+  /api/alert-rules:
+    post:
+      tags:
+        - Alerts
+      summary: Create alert rule
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Rule created
+
+    get:
+      tags:
+        - Alerts
+      summary: List alert rules
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Rules list
+
+  /api/alert-rules/{id}:
+    put:
+      tags:
+        - Alerts
+      summary: Update alert rule
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Rule updated
+
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: List notifications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Notifications list
+
+  /api/notifications/{id}/read:
+    put:
+      tags:
+        - Notifications
+      summary: Mark notification read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Marked read
+
+  /api/notifications/test:
+    post:
+      tags:
+        - Notifications
+      summary: Send test notification
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Test sent
+
+  /api/notification-channels:
+    get:
+      tags:
+        - Notifications
+      summary: List channels
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Channels
+
+  /api/notification-subscriptions:
+    post:
+      tags:
+        - Notifications
+      summary: Create subscription
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Subscription created
+
+  /api/ai/jobs:
+    post:
+      tags:
+        - AI
+      summary: Create AI job
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Job created
+
+    get:
+      tags:
+        - AI
+      summary: List AI jobs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Jobs list
+
+  /api/ai/jobs/{id}:
+    get:
+      tags:
+        - AI
+      summary: Get AI job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Job details
+
+    delete:
+      tags:
+        - AI
+      summary: Delete AI job
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Job deleted
+
+  /api/analytics/summary:
+    get:
+      tags:
+        - Analytics
+      summary: Analytics summary
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Summary
+
+  /api/analytics/events:
+    get:
+      tags:
+        - Analytics
+      summary: Analytics events
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Events
+
+  /api/analytics/cameras:
+    get:
+      tags:
+        - Analytics
+      summary: Analytics per camera
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Camera analytics
+
+  /api/onprem/agents/{id}:
+    get:
+      tags:
+        - On-Prem Agents
+      summary: Get agent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent details
+
+    put:
+      tags:
+        - On-Prem Agents
+      summary: Update agent
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Agent updated
+
+  /api/internal/transcode/jobs:
+    get:
+      tags:
+        - Internal
+      summary: List transcode jobs
+      responses:
+        '200':
+          description: Jobs list
+
+  /api/transcode/profiles:
+    get:
+      tags:
+        - Transcode
+      summary: List transcode profiles
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profiles
+
+    post:
+      tags:
+        - Transcode
+      summary: Create transcode profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Profile created
+
+  /api/system/status:
+    get:
+      tags:
+        - Monitoring
+      summary: System status overview
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Status
+
+  /api/metrics:
+    get:
+      tags:
+        - Monitoring
+      summary: Metrics
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Metrics
+
+  /api/logs:
+    get:
+      tags:
+        - Monitoring
+      summary: Logs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Logs
+
+  /api/storage/status:
+    get:
+      tags:
+        - Monitoring
+      summary: Storage status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Storage details
+
+  /api/gpu/status:
+    get:
+      tags:
+        - Monitoring
+      summary: GPU status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: GPU details
+
+  /api/network/status:
+    get:
+      tags:
+        - Monitoring
+      summary: Network status
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Network details
+
+  /api/audit/logs:
+    get:
+      tags:
+        - Monitoring
+      summary: Audit logs
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Audit logs
+
+  /api/backups:
+    post:
+      tags:
+        - Backup
+      summary: Create backup
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '201':
+          description: Backup created
+
+    get:
+      tags:
+        - Backup
+      summary: List backups
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Backups list
+
+  /api/backups/{id}:
+    get:
+      tags:
+        - Backup
+      summary: Get backup
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Backup details
+
+    post:
+      tags:
+        - Backup
+      summary: Restore backup
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '202':
+          description: Restore initiated
 
 components:
   schemas:
