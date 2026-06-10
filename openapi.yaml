@@ -1,0 +1,1126 @@
+openapi: 3.0.0
+info:
+  title: Drone Backend API
+  description: Smart Surveillance Platform - Drone Video Backend Service
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: User login
+      description: Authenticate user with username/password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  example: admin
+                password:
+                  type: string
+                  example: password123
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                    example: "access-token-sample"
+                  refreshToken:
+                    type: string
+                    example: "refresh-token-sample"
+                  expiresIn:
+                    type: integer
+                    example: 3600
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: string
+        '401':
+          description: Invalid credentials
+
+  /api/auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh access token
+      description: Obtain new access token using refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken:
+                    type: string
+                  refreshToken:
+                    type: string
+                  expiresIn:
+                    type: integer
+
+  /api/cameras:
+    post:
+      tags:
+        - Cameras
+      summary: Register new camera
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cameraId
+                - siteId
+                - label
+                - rtspUrl
+              properties:
+                cameraId:
+                  type: string
+                  example: "cam-001"
+                siteId:
+                  type: string
+                  example: "site-1"
+                label:
+                  type: string
+                  example: "Front Gate Camera"
+                rtspUrl:
+                  type: string
+                  example: "rtsp://192.168.1.100:554/stream"
+                status:
+                  type: string
+                  enum: [online, offline]
+                  example: "online"
+      responses:
+        '201':
+          description: Camera registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+        '400':
+          description: Invalid request
+
+    get:
+      tags:
+        - Cameras
+      summary: List cameras
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: siteId
+          in: query
+          schema:
+            type: string
+          description: Filter by site ID
+      responses:
+        '200':
+          description: List of cameras
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Camera'
+
+  /api/cameras/{id}:
+    get:
+      tags:
+        - Cameras
+      summary: Get camera by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Camera details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+        '404':
+          description: Camera not found
+
+    put:
+      tags:
+        - Cameras
+      summary: Update camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Camera'
+      responses:
+        '200':
+          description: Camera updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Camera'
+        '404':
+          description: Camera not found
+
+    delete:
+      tags:
+        - Cameras
+      summary: Delete camera
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Camera deleted
+        '404':
+          description: Camera not found
+
+  /api/recordings:
+    post:
+      tags:
+        - Recordings
+      summary: Create recording entry
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cameraId
+                - startAt
+                - endAt
+                - sizeBytes
+              properties:
+                cameraId:
+                  type: string
+                  example: "cam-001"
+                startAt:
+                  type: string
+                  format: date-time
+                  example: "2026-06-05T10:00:00Z"
+                endAt:
+                  type: string
+                  format: date-time
+                  example: "2026-06-05T11:00:00Z"
+                sizeBytes:
+                  type: integer
+                  example: 5000000
+                storageUrl:
+                  type: string
+                  example: "s3://bucket/recordings/rec-001"
+      responses:
+        '201':
+          description: Recording created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recording'
+
+    get:
+      tags:
+        - Recordings
+      summary: List recordings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cameraId
+          in: query
+          schema:
+            type: string
+          description: Filter by camera ID
+        - name: start
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: Start date for range query
+        - name: end
+          in: query
+          schema:
+            type: string
+            format: date-time
+          description: End date for range query
+      responses:
+        '200':
+          description: List of recordings
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Recording'
+
+  /api/recordings/{id}:
+    get:
+      tags:
+        - Recordings
+      summary: Get recording by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recording details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recording'
+        '404':
+          description: Recording not found
+
+    put:
+      tags:
+        - Recordings
+      summary: Update recording
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recording'
+      responses:
+        '200':
+          description: Recording updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recording'
+        '404':
+          description: Recording not found
+
+    delete:
+      tags:
+        - Recordings
+      summary: Delete recording
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Recording deleted
+        '404':
+          description: Recording not found
+
+  /api/recordings/{id}/metadata:
+    get:
+      tags:
+        - Recordings
+      summary: Get recording metadata
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recording metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recording'
+
+  /api/recordings/{id}/generate-playback-url:
+    post:
+      tags:
+        - Recordings
+      summary: Generate playback URL
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                protocol:
+                  type: string
+                  enum: [hls, dash]
+                  example: "hls"
+                ttl:
+                  type: integer
+                  description: Time to live in seconds
+                  example: 300
+      responses:
+        '200':
+          description: Playback URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  playbackUrl:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  /api/recordings/timelines/{siteId}:
+    get:
+      tags:
+        - Recordings
+      summary: Get recording timeline for site
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: siteId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Timeline data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  siteId:
+                    type: string
+                  range:
+                    type: object
+                    properties:
+                      from:
+                        type: string
+                        format: date-time
+                      to:
+                        type: string
+                        format: date-time
+                  tracks:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cameraId:
+                          type: string
+                        segments:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              start:
+                                type: string
+                                format: date-time
+                              end:
+                                type: string
+                                format: date-time
+                              thumbnail:
+                                type: string
+                              recordingId:
+                                type: string
+
+  /api/onprem/agents:
+    post:
+      tags:
+        - On-Prem Agents
+      summary: Register on-prem agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agentId
+                - siteId
+              properties:
+                agentId:
+                  type: string
+                siteId:
+                  type: string
+                ip:
+                  type: string
+                capabilities:
+                  type: array
+                  items:
+                    type: string
+                  example: ["transcode", "edge-record", "webrtc-proxy"]
+      responses:
+        '201':
+          description: Agent registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  agentId:
+                    type: string
+
+  /api/onprem/agents/{id}/heartbeat:
+    post:
+      tags:
+        - On-Prem Agents
+      summary: Agent heartbeat
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum: [healthy, warning, offline]
+                cpu:
+                  type: number
+                  description: CPU usage percentage
+                mem:
+                  type: number
+                  description: Memory usage percentage
+                streamsActive:
+                  type: integer
+                timestamp:
+                  type: string
+                  format: date-time
+      responses:
+        '200':
+          description: Heartbeat received
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+
+  /api/onprem/agents/{id}/capabilities:
+    get:
+      tags:
+        - On-Prem Agents
+      summary: Get agent capabilities
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Agent capabilities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  agentId:
+                    type: string
+                  capabilities:
+                    type: array
+                    items:
+                      type: string
+
+  /api/ingest/announce:
+    post:
+      tags:
+        - Ingest
+      summary: Announce stream availability from on-prem agent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agentId
+                - cameraId
+              properties:
+                agentId:
+                  type: string
+                cameraId:
+                  type: string
+                streams:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      protocol:
+                        type: string
+                        enum: [rtsp, webrtc, hls]
+                      url:
+                        type: string
+                      codec:
+                        type: string
+                      resolution:
+                        type: string
+      responses:
+        '200':
+          description: Stream announced
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accepted:
+                    type: boolean
+                  ingestId:
+                    type: string
+
+  /api/ingest/signed-url:
+    post:
+      tags:
+        - Ingest
+      summary: Generate signed ingest URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agentId
+                - cameraId
+                - protocol
+              properties:
+                agentId:
+                  type: string
+                cameraId:
+                  type: string
+                protocol:
+                  type: string
+                  enum: [rtmp, srt, webrtc]
+                ttlSeconds:
+                  type: integer
+                  example: 3600
+      responses:
+        '200':
+          description: Signed URL generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                  method:
+                    type: string
+                    enum: [POST, PUT]
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  /api/streams/available:
+    get:
+      tags:
+        - Streams
+      summary: List available streams
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: cameraId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: profile
+          in: query
+          schema:
+            type: string
+            example: "720p"
+      responses:
+        '200':
+          description: Available streams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    protocol:
+                      type: string
+                    profile:
+                      type: string
+                    latencyMs:
+                      type: integer
+
+  /api/streams/watch:
+    post:
+      tags:
+        - Streams
+      summary: Start watching live stream
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cameraId
+                - protocol
+              properties:
+                cameraId:
+                  type: string
+                profile:
+                  type: string
+                  example: "720p"
+                protocol:
+                  type: string
+                  enum: [webrtc, hls]
+                preferLowLatency:
+                  type: boolean
+      responses:
+        '200':
+          description: Stream session started
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - type: object
+                    properties:
+                      sessionId:
+                        type: string
+                      webrtcOffer:
+                        type: object
+                        properties:
+                          sdp:
+                            type: string
+                      signalingUrl:
+                        type: string
+                  - type: object
+                    properties:
+                      playbackUrl:
+                        type: string
+
+  /api/streams/stop:
+    post:
+      tags:
+        - Streams
+      summary: Stop watching stream
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sessionId:
+                  type: string
+      responses:
+        '200':
+          description: Stream stopped
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stopped:
+                    type: boolean
+
+  /api/streams/subscribe:
+    post:
+      tags:
+        - Streams
+      summary: Subscribe to multiple camera streams
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cameraIds
+              properties:
+                sessionId:
+                  type: string
+                cameraIds:
+                  type: array
+                  items:
+                    type: string
+                profiles:
+                  type: array
+                  items:
+                    type: string
+                layout:
+                  type: string
+                  enum: [grid, custom]
+      responses:
+        '200':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  subscriptionId:
+                    type: string
+                  streams:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        cameraId:
+                          type: string
+                        playbackUrl:
+                          type: string
+
+  /api/compare:
+    post:
+      tags:
+        - Comparison
+      summary: Create video comparison session
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leftRecordingId
+                - rightRecordingId
+              properties:
+                leftRecordingId:
+                  type: string
+                rightRecordingId:
+                  type: string
+                leftStart:
+                  type: string
+                  format: date-time
+                rightStart:
+                  type: string
+                  format: date-time
+      responses:
+        '202':
+          description: Comparison session queued
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  compareSessionId:
+                    type: string
+                  status:
+                    type: string
+                    example: "queued"
+
+  /api/compare/{id}/status:
+    get:
+      tags:
+        - Comparison
+      summary: Get comparison session status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Comparison status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  compareSessionId:
+                    type: string
+                  status:
+                    type: string
+                    enum: [queued, preparing, ready, failed]
+                  left:
+                    type: object
+                    properties:
+                      playbackUrl:
+                        type: string
+                  right:
+                    type: object
+                    properties:
+                      playbackUrl:
+                        type: string
+
+  /api/internal/streams/allocate:
+    post:
+      tags:
+        - Internal
+      summary: Allocate stream resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - cameraId
+                - protocol
+              properties:
+                cameraId:
+                  type: string
+                agentId:
+                  type: string
+                targetProfiles:
+                  type: array
+                  items:
+                    type: string
+                protocol:
+                  type: string
+                  enum: [webrtc, hls]
+                sessionId:
+                  type: string
+      responses:
+        '201':
+          description: Stream allocated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  allocationId:
+                    type: string
+                  proxyEndpoint:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  /api/internal/streams/release:
+    post:
+      tags:
+        - Internal
+      summary: Release stream allocation
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allocationId:
+                  type: string
+      responses:
+        '200':
+          description: Stream released
+
+  /api/internal/transcode/jobs:
+    post:
+      tags:
+        - Internal
+      summary: Create transcode job
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                source:
+                  type: string
+                cameraId:
+                  type: string
+                profiles:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      resolution:
+                        type: string
+                      bitrate:
+                        type: integer
+      responses:
+        '201':
+          description: Transcode job created
+
+  /api/internal/transcode/jobs/{id}/status:
+    get:
+      tags:
+        - Internal
+      summary: Get transcode job status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Transcode job status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  jobId:
+                    type: string
+                  status:
+                    type: string
+                  progress:
+                    type: integer
+
+  /api/internal/health:
+    get:
+      tags:
+        - Health
+      summary: System health check
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  components:
+                    type: object
+
+components:
+  schemas:
+    Camera:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cameraId:
+          type: string
+        siteId:
+          type: string
+        label:
+          type: string
+        rtspUrl:
+          type: string
+        status:
+          type: string
+          enum: [online, offline]
+        lastSeen:
+          type: string
+          format: date-time
+
+    Recording:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        cameraId:
+          type: string
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        sizeBytes:
+          type: integer
+        storageUrl:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
